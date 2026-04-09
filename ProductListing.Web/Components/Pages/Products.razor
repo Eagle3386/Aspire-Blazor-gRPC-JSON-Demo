@@ -44,7 +44,7 @@ else
     {
       if (!(IsFiltering && item.Price > 2m))
       {
-        if (!IsGalleryView)
+        if (IsGalleryView)
         {
           <MudItem xs="2">
             <MudCard Class="pa-1" Height="180px" Width="180px">
