@@ -1,0 +1,148 @@
+@page "/Benchmark"
+@attribute [OutputCache(Duration = 5)]
+@attribute [StreamRendering(true)]
+@inject BenchmarkClient BenchmarkClient
+@using System.Diagnostics
+@using Grpc.Net.Client
+@using Microsoft.AspNetCore.Components.Rendering
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@* @using Microsoft.AspNetCore.Components.WebAssembly.Hosting *@
+<PageTitle>Blazor + gRPC-Web = ♥️</PageTitle>
+<h1>Benchmark: gRPC vs. JSON</h1>
+<p>This component benchmarks data retrieval via gRPC & JSON.</p>
+<form> @* @onsubmit="Run"> *@
+  <div class="form-group">
+    <label>Benchmark type</label>
+    <select class="form-control" @bind="mode">
+      <option value="@BenchmarkMode.Json">JSON</option>
+      <option value="@BenchmarkMode.GrpcWeb">gRPC-Web</option>
+      <option value="@BenchmarkMode.GrpcWebText">gRPC-Web-Text</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label>Benchmark items count</label>
+    <input class="form-control" max="999999" min="1" type="text" @bind="returnCount">
+  </div>
+  <div class="form-group">
+    <label>
+      <input type="checkbox" @bind="shouldVirtualizeUi" />
+      Virtualize UI
+    </label>
+  </div>
+  <button class="btn btn-primary" disabled="@retrievalStopwatch.IsRunning">Run</button>
+</form>
+<hr />
+<br />
+@if (error is not null)
+{
+  <p><em>@error</em></p>
+}
+else if (retrievalStopwatch.IsRunning)
+{
+  <p><em>Loading…</em></p>
+}
+else if (grpcForecasts is not null || jsonForecasts is not null)
+{
+  <h4>Results</h4>
+  <ul class="list-group">
+    <li class="list-group-item">Data size: <b>@(Math.Round((double)bytesRead / 1024, 2)) kilobytes</b></li>
+    <li class="list-group-item">Network time: <b>@Math.Round(retrievalSeconds, 2) seconds</b></li>
+    <li class="list-group-item">Deserialization time: <b>@(Math.Round(totalSeconds - retrievalSeconds, 2)) seconds</b></li>
+    @if (renderingStopwatch is { IsRunning: false, Elapsed.TotalSeconds: > 0 })
+    {
+      <li class="list-group-item">Rendering time: <b>@Math.Round(renderingStopwatch.Elapsed.TotalSeconds, 2) seconds</b></li>
+    }
+  </ul>
+  <br />
+  <h4>Data</h4>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Temp. (°C)</th>
+        <th>Temp. (°F)</th>
+        <th>Summary</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (grpcForecasts != null)
+      {
+        if (virtualizeUi)
+        {
+          <Virtualize Items="grpcForecasts" ChildContent="renderGrpcForecast" />
+        }
+        else
+        {
+          foreach (var forecast in grpcForecasts)
+          {
+            @renderGrpcForecast(forecast);
+          }
+        }
+      }
+      else if (jsonForecasts != null)
+      {
+        if (virtualizeUi)
+        {
+          <Virtualize Items="jsonForecasts" ChildContent="renderJsonForecast" />
+        }
+        else
+        {
+          foreach (var forecast in jsonForecasts)
+          {
+            @renderJsonForecast(forecast);
+          }
+        }
+      }
+    </tbody>
+  </table>
+}
+@code
+{
+  private static Stopwatch renderingStopwatch = new();
+  private static Stopwatch retrievalStopwatch = new();
+  //private static BenchmarkHttpHandler httpHandler = new(retrievalStopwatch, );
+
+  private List<Protos.WeatherForecast>? grpcForecasts;
+  private List<WeatherForecast>? jsonForecasts;
+  private double totalSeconds;
+  private double retrievalSeconds;
+  private int bytesRead;
+  private bool virtualizeUi;
+
+  private BenchmarkMode mode;
+  private int returnCount = 10_000;
+  private string? error;
+  private bool shouldVirtualizeUi = true;
+
+  /// <inheritdoc />
+  protected override Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (renderingStopwatch.IsRunning)
+    {
+      renderingStopwatch.Stop();
+      InvokeAsync(StateHasChanged);
+    }
+
+    return Task.CompletedTask;
+  }
+
+  private static RenderFragment<WeatherForecast> renderJsonForecast = forecast => __builder =>
+  {
+    <tr @key="forecast.Date">
+      <td>@forecast.Date.ToShortDateString()</td>
+      <td>@forecast.TemperatureC</td>
+      <td>@forecast.TemperatureF</td>
+      <td>@forecast.Summary</td>
+    </tr>
+  };
+
+  private static RenderFragment<Protos.WeatherForecast> renderGrpcForecast = forecast => __builder =>
+  {
+    <tr @key="forecast.Date">
+      <td>@forecast.Date.ToDateTime().ToShortDateString()</td>
+      <td>@forecast.TemperatureC</td>
+      <td>@WeatherForecast.GetFahrenheit(forecast.TemperatureC)</td>
+      <td>@forecast.Summary</td>
+    </tr>
+  };
+}

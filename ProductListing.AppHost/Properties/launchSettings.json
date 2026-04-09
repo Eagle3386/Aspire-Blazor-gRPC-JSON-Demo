@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "https": {
+      "applicationUrl": "https://monitor.dev.localhost:442",
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "environmentVariables": {
+        "ASPIRE_DASHBOARD_MCP_ENDPOINT_URL": "https://mcp.dev.localhost:450",
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://otlp.dev.localhost:451",
+        "ASPIRE_DASHBOARD_TELEMETRY_OPTOUT": "true",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://res.dev.localhost:452",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DOTNET_ENVIRONMENT": "Development",
+        "HTTP_PROXY": "",
+        "HTTP_PROXYS": ""
+      },
+      "launchBrowser": true
+    }
+  }
+}

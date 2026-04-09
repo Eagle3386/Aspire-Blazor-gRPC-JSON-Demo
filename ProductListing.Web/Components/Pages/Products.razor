@@ -1,0 +1,163 @@
+@page "/Products"
+@inject ProductsClient Client
+<PageTitle>Products</PageTitle>
+@if (IsLoading)
+{
+  <h2>@Status</h2>
+}
+else
+{
+  <MudStack AlignItems="AlignItems.Center" Class="my-4" Justify="Justify.Center" Row="true" Spacing="5">
+    <MudText Color="Color.Primary" Typo="Typo.subtitle1">Actions:</MudText>
+    <MudButtonGroup Color="Color.Primary" DropShadow="true" Variant="Variant.Outlined">
+      <MudTooltip Arrow="true" Color="Color.Info" Placement="Placement.Bottom">
+        <ChildContent>
+          <MudToggleIconButton Color="Color.Info" Icon="@Icons.FilterAlt" ToggledChanged="FilterAsync" ToggledColor="Color.Error"
+                               ToggledIcon="@Icons.FilterAltOff" />
+        </ChildContent>
+        <TooltipContent>
+          <MudText Typo="Typo.caption">Filters items above 2 € out.</MudText>
+        </TooltipContent>
+      </MudTooltip>
+      <MudTooltip Arrow="true" Color="Color.Info" Placement="Placement.Bottom">
+        <ChildContent>
+          <MudToggleIconButton Color="Color.Error" Icon="@GetSortingIcon()" ToggledChanged="SortAsync" ToggledColor="Color.Tertiary" />
+        </ChildContent>
+        <TooltipContent>
+          <MudStack Spacing="0">
+            <MudText Typo="Typo.caption">Currently sorts @Sorting.ToString().ToLowerInvariant().</MudText>
+            <MudText Typo="Typo.caption">
+              Click to sort @((Sorting switch
+              {
+                SortDirection.Ascending  => SortDirection.Descending,
+                SortDirection.Descending => SortDirection.Ascending,
+                SortDirection.None or _  => SortDirection.Ascending
+              }).ToString().ToLowerInvariant()).
+            </MudText>
+          </MudStack>
+        </TooltipContent>
+      </MudTooltip>
+    </MudButtonGroup>
+  </MudStack>
+  <MudGrid Justify="Justify.Center"  Spacing="3" >
+    @foreach (var item in Items)
+    {
+      if (!(IsFiltering && item.Price > 2m))
+      {
+        if (!IsGalleryView)
+        {
+          <MudItem xs="2">
+            <MudCard Class="pa-1" Height="180px" Width="180px">
+              <MudImage Alt="@(string.Join(", ", [item.Name, item.Unit, item.Price]))" Class="rounded-lg" Elevation="25"
+                        Fluid="true" ObjectFit="ObjectFit.ScaleDown" ObjectPosition="ObjectPosition.Center" Src="@item.ImageUrl"
+                        Style="max-height:172px; max-width:172px;" />
+              @* <img alt="" src="" style="margin: 0 auto; max-height:240px; max-width:240px;" /> *@
+            </MudCard>
+          </MudItem>
+        }
+        else
+        {
+          <MudItem xs="12">
+            <MudCard Class="px-10 py-4" Height="180px" Width="360px">
+              <MudStack AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Row="true">
+                <MudImage Alt="@(string.Join(", ", [item.Name, item.Unit, item.Price]))" Class="rounded-lg" Elevation="25"
+                          Fluid="false" ObjectFit="ObjectFit.ScaleDown" ObjectPosition="ObjectPosition.Left" Src="@item.ImageUrl"
+                          Style="max-height:140px;" />
+                <MudStack AlignItems="AlignItems.End">
+                  <MudText Typo="Typo.body2">@item.Name</MudText>
+                  <MudText Typo="Typo.body2">@item.Price</MudText>
+                  <MudText Typo="Typo.body2">@item.Unit</MudText>
+                </MudStack>
+              </MudStack>
+              @* <img alt="@($"{item.Name}, {item.Unit}, {item.Price}")" src="@item.ImageUrl" style="margin:auto; max-height:240px; max-width:240px;" /> *@
+            </MudCard>
+          </MudItem>
+        }
+      }
+    }
+  </MudGrid>
+}
+@code
+{
+  [CascadingParameter(Name = nameof(IsGalleryView))]
+  public bool IsGalleryView { get; set; }
+
+  private const string Loading = "Please wait, loading products…";
+
+  private bool IsFiltering { get; set; }
+
+  private bool IsLoading { get; set; } = true;
+
+  private List<ProductListing.Protos.Product> Items { get; set; } = [];
+
+  private List<ProductListing.Protos.Product> ItemsDisplayed { get; set; } = [];
+
+  private Justify Justification { get; set; } = Justify.Center;
+
+  private SortDirection Sorting { get; set; } = SortDirection.None;
+
+  private int Spacing { get; set; } = 3;
+
+  private string Status { get; set; } = Loading;
+
+  private CancellationTokenSource TokenSource { get; } = new();
+
+  public void Dispose() => TokenSource.Cancel();
+
+  /// <inheritdoc />
+  protected override async Task OnInitializedAsync()
+  {
+    Items.Clear();
+    await foreach (var product in Client.StreamProductsAsync(30, TokenSource.Token)) // For testing alternative service implementation.
+    {
+      Items.Add(product);
+      if ((Items.Count % 5) == 0)
+      {
+        Status = $"{Loading} {Items.Count} received.";
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(1); // Allow for UI update.
+      }
+    }
+
+    Status = $"{Loading} {Items.Count} received.";
+    await InvokeAsync(StateHasChanged);
+    await Task.Delay(1); // Allow for UI update.
+
+    IsLoading = false;
+    await InvokeAsync(StateHasChanged);
+    await Task.WhenAll(Task.Delay(1), base.OnInitializedAsync());
+  }
+
+  private Task FilterAsync(bool isFiltered)
+  {
+    if (isFiltered)
+    {
+      //ItemsDisplayed = Items.(item => item.)
+    }
+
+    return Task.CompletedTask;
+  }
+
+  private string GetSortingIcon() => Sorting switch
+  {
+    SortDirection.Ascending  => Icons.TrendingUp,
+    SortDirection.Descending => Icons.TrendingDown,
+    SortDirection.None or _ => Icons.Sort
+  };
+
+  private Task SortAsync()
+  {
+    if (Sorting is SortDirection.Descending or SortDirection.None)
+    {
+      Sorting = SortDirection.Ascending;
+      Items = Items.OrderBy(item => item.Name).ToList();
+    }
+    else
+    {
+      Sorting = SortDirection.Descending;
+      Items = Items.OrderByDescending(item => item.Name).ToList();
+    }
+
+    return InvokeAsync(StateHasChanged);
+  }
+}

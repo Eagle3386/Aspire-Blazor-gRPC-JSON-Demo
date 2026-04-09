@@ -1,0 +1,36 @@
+syntax = "proto3";
+package data;
+option csharp_namespace = "ProductListing.Protos";
+
+import "Wrappers/GrpcDecimal.proto";
+
+// Represents the product service.
+service Products {
+  // Streams products based on the provided request parameters to the caller.
+  rpc StreamProducts (ProductsRequest) returns (stream Product);
+  rpc StreamProducts2 (ProductsRequest) returns (stream Product);
+}
+
+// Represents the product.
+message Product {
+  // Gets/sets the ID.
+  int32 id = 1;
+
+  // Gets/sets the name.
+  string image_url = 2;
+
+  // Gets the articles.
+  string name = 3;
+
+  // Gets/sets the price.
+  wrappers.GrpcDecimal price = 4;
+
+  // Gets/sets the unit.
+  string unit = 5;
+}
+
+// Represents the products request.
+message ProductsRequest {
+  // Gets/sets the quantity of products to send.
+  int32 quantity = 1;
+}

@@ -1,0 +1,17 @@
+syntax = "proto3";
+package wrappers;
+option csharp_namespace = "ProductListing.Protos";
+
+// NOTE: This code is greatly inspired by .NET’s architecture eBook "gRPC for WCF developers" (p. 16/17).
+//       For details, see https://docs.microsoft.com/en-us/dotnet/architecture/grpc-for-wcf-developers/
+
+// Represents a gRPC wrapper for .NET’s "decimal" value type which separates it into an integer & the remainder into a fractional
+// part to minimize rounding errors common to "float" & "double".
+// Example: 12345.6789 => { integer = 12345, fractional = 678900000 }
+message GrpcDecimal {
+  // The integer part of the amount.
+  int64 integer = 1;       // NOTE: For best efficiency, change to "sint64" whenever negative amounts are likely to occur.
+
+  // The fractional part of the amount. Uses 10^-9 precision.
+  sfixed32 fractional = 2; // NOTE: Must match integer part's sign.
+}

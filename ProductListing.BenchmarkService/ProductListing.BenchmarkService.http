@@ -1,0 +1,6 @@
+@Api_HostAddress = https://benchmark.dev.localhost:445
+
+GET {{Api_HostAddress}}/forecast/
+Accept: application/json
+
+###

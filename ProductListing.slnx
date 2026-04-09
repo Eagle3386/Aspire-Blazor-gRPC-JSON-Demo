@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="global.json" />
+  </Folder>
+  <Project Path="ProductListing.AppHost/ProductListing.AppHost.csproj" />
+  <Project Path="ProductListing.BenchmarkService/ProductListing.BenchmarkService.csproj" />
+  <Project Path="ProductListing.ProductService/ProductListing.ProductService.csproj" />
+  <Project Path="ProductListing.Protos/ProductListing.Protos.csproj" />
+  <Project Path="ProductListing.ServiceDefaults/ProductListing.ServiceDefaults.csproj" />
+  <Project Path="ProductListing.Tests/ProductListing.Tests.csproj" />
+  <Project Path="ProductListing.Web/ProductListing.Web.csproj" />
+</Solution>

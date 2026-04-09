@@ -1,0 +1,8 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.34.1" PrivateAssets="All" />
+    <PackageReference Include="Grpc.Tools" Version="2.80.0" PrivateAssets="All" />
+    <Protobuf CompileOutputs="false" GrpcServices="None" Include="*.proto" OutputDir="%(RelativeDir)" ProtoCompile="false" />
+    <Protobuf GrpcServices="Server" Include="Wrappers\*.proto" />
+  </ItemGroup>
+</Project>

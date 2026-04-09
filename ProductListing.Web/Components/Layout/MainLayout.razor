@@ -1,0 +1,184 @@
+@inherits LayoutComponentBase
+@implements IAsyncDisposable
+@implements IBrowserViewportObserver
+@inject IBrowserViewportService ViewportService
+@rendermode InteractiveServer
+@using MudBlazor.Services
+<MudThemeProvider @ref="ThemeProvider" @bind-IsDarkMode="@IsDarkMode" />
+<MudDialogProvider BackdropClick="true" CloseOnEscapeKey="true" />
+<MudPopoverProvider />
+<MudSnackbarProvider />
+<MudLayout>
+  <MudAppBar Elevation="5" Bottom="IsAppBarBottom" Dense="IsAppBarBottom" Fixed="true">
+    <MudToggleIconButton Color="Color.Primary" Edge="Edge.Start" Icon="@Icons.Menu" @bind-Toggled="IsDrawerOpen"
+                         ToggledIcon="@Icons.MenuOpen" Variant="Variant.Outlined" />
+    <MudSpacer />
+    <MudTooltip Arrow="true" Color="Color.Info" Placement="IsAppBarBottom ? Placement.Top : Placement.Bottom">
+      <ChildContent>
+        <MudToggleIconButton Color="Color.Success" Icon="@Icons.ScreenRotation" Toggled="IsDetailView"
+                             ToggledChanged="OnGalleryChangedAsync" ToggledColor="Color.Info" />
+      </ChildContent>
+      <TooltipContent>
+        <MudStack Spacing="0">
+          <MudText Typo="Typo.caption">Currently in @(IsDetailView ? "detail" : "gallery") view.</MudText>
+          <MudText Typo="Typo.caption" Style="text-wrap:nowrap;">Click to switch to @(IsDetailView ? "gallery" : "detail") view.</MudText>
+        </MudStack>
+      </TooltipContent>
+    </MudTooltip>
+    <MudTooltip Arrow="true" Color="Color.Info" Placement="IsAppBarBottom ? Placement.Top : Placement.Left">
+      <ChildContent>
+        <MudIconButton Color="ModeColor" Edge="Edge.End" Icon="@ModeIcon" OnClick="@(async _ => await OnModeChangedAsync())" />
+      </ChildContent>
+      <TooltipContent>
+        <MudStack Spacing="0">
+          <MudText Typo="Typo.caption">Currently in @Mode mode.</MudText>
+          <MudText Typo="Typo.caption" Style="text-wrap:nowrap;">
+            Click to switch to @(Mode switch
+            {
+              DarkLightMode.Dark => "Light",
+              DarkLightMode.Light => "System",
+              DarkLightMode.System or _ => "Dark"
+            }) mode.
+          </MudText>
+        </MudStack>
+      </TooltipContent>
+    </MudTooltip>
+  </MudAppBar>
+  <MudDrawer Anchor="IsAppBarBottom ? Anchor.Bottom : Anchor.Left" Breakpoint="Breakpoint.Md"
+             ClipMode="IsAppBarBottom ? DrawerClipMode.Never : DrawerClipMode.Always" OpenMiniOnHover="true" Overlay="IsAppBarBottom"
+             Variant="IsAppBarBottom ? DrawerVariant.Temporary : DrawerVariant.Mini" @bind-Open="IsDrawerOpen">
+    <MudDrawerHeader Style="@($"display:{(IsDrawerOpen ? "flex" : "none")};")">
+      <MudStack Style="@($"{(IsAppBarBottom ? "width:100%" : string.Empty)}")">
+        <MudText Align="Align.Center" Typo="Typo.h6" Class="px-n2 pt-2">Product Listing Demo</MudText>
+        <MudDivider Class="my-2" />
+      </MudStack>
+    </MudDrawerHeader>
+    <NavMenu />
+  </MudDrawer>
+  <MudMainContent>
+    <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Style="max-width:1260px;">
+      <CascadingValue TValue="bool" Name="@nameof(IsGalleryView)" Value="IsGalleryView">
+        @Body
+      </CascadingValue>
+    </MudContainer>
+  </MudMainContent>
+</MudLayout>
+<div id="blazor-error-ui">
+  An unhandled error has occurred.
+  <a href="" class="reload">Reload</a>
+  <a class="dismiss">🗙</a>
+</div>
+@code
+{
+  private enum DarkLightMode
+  {
+    Dark = -1,
+    Light = 1,
+    System = 0
+  }
+
+  private bool IsAppBarBottom { get; set; } = true;
+
+  private bool IsDarkMode { get; set; } = true;
+
+  private bool IsDetailView { get; set; } = true;
+
+  private bool IsDetailViewAuto { get; set; } = true;
+
+  private bool IsDrawerOpen { get; set; } = true;
+
+  private bool IsGalleryView { get; set; }
+
+  private DarkLightMode Mode { get; set; }
+
+  private Color ModeColor => Mode switch
+  {
+    DarkLightMode.Dark        => Color.Error,
+    DarkLightMode.Light       => Color.Warning,
+    DarkLightMode.System or _ => Color.Surface
+  };
+
+  private string ModeIcon => Mode switch
+  {
+    DarkLightMode.Dark        => Icons.DarkMode,
+    DarkLightMode.Light       => Icons.LightMode,
+    DarkLightMode.System or _ => Icons.AutoMode
+  };
+
+  private int WinWidth { get; set; } = 0;
+
+  private MudThemeProvider ThemeProvider { get; set; } = default!;
+
+  /// <inheritdoc />
+  public async ValueTask DisposeAsync() => await ViewportService.UnsubscribeAsync(this);
+
+  /// <inheritdoc />
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (firstRender)
+    {
+      await Task.WhenAll(
+        ViewportService.SubscribeAsync(this, fireImmediately: true),
+        ThemeProvider.WatchSystemDarkModeAsync(isDark =>
+        {
+          IsDarkMode = isDark;
+
+          return InvokeAsync(StateHasChanged);
+        }));
+      IsDarkMode = await GetSystemSettingAsync();
+      await InvokeAsync(StateHasChanged);
+    }
+
+    await base.OnAfterRenderAsync(firstRender);
+  }
+
+  private Task<bool> GetSystemSettingAsync() => ThemeProvider.GetSystemDarkModeAsync();
+
+  private async Task OnGalleryChangedAsync(bool isDetail)
+  {
+    IsAppBarBottom = IsDetailView = isDetail;
+    IsDetailViewAuto = IsDrawerOpen = IsGalleryView = !isDetail;
+    await InvokeAsync(StateHasChanged);
+  }
+
+  private async Task OnModeChangedAsync()
+  {
+    switch (Mode)
+    {
+      case DarkLightMode.Dark:
+        IsDarkMode = false;
+        Mode = DarkLightMode.Light;
+        break;
+
+      case DarkLightMode.System:
+        IsDarkMode = true;
+        Mode = DarkLightMode.Dark;
+        break;
+
+      case DarkLightMode.Light:
+      default:
+        IsDarkMode = await GetSystemSettingAsync();
+        Mode = DarkLightMode.System;
+        break;
+    }
+
+    await InvokeAsync(StateHasChanged);
+  }
+
+  /// <inheritdoc />
+  Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
+
+  /// <inheritdoc />
+  ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new() { NotifyOnBreakpointOnly = false, ReportRate = 50 };
+
+  /// <inheritdoc />
+  Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs args)
+  {
+    if (IsDetailViewAuto)
+    {
+      IsGalleryView = !(IsAppBarBottom = IsDetailView = args.BrowserWindowSize.Width < 630);
+    }
+
+    return InvokeAsync(StateHasChanged);
+  }
+}

@@ -1,0 +1,11 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.2.1">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>2ca4d47b-4f7a-4c18-aa96-fe2e62e78b86</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+		<ProjectReference Include="..\ProductListing.BenchmarkService\ProductListing.BenchmarkService.csproj" />
+		<ProjectReference Include="..\ProductListing.ProductService\ProductListing.ProductService.csproj" />
+    <ProjectReference Include="..\ProductListing.Web\ProductListing.Web.csproj" />
+  </ItemGroup>
+</Project>

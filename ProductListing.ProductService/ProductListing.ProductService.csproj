@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.34.1" PrivateAssets="All" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.76.0" />
+    <PackageReference Include="Grpc.AspNetCore.Web" Version="2.76.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
+    <Protobuf Include="..\ProductListing.Protos\Product.proto" Link="Protos\Product.proto" GrpcServices="Server" />
+    <Content Include="..\ProductListing.Protos\Wrappers\GrpcDecimal.proto" Link="Protos\GrpcDecimal.proto" CopyToOutputDirectory="Never" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ProductListing.Protos\ProductListing.Protos.csproj" />
+    <ProjectReference Include="..\ProductListing.ServiceDefaults\ProductListing.ServiceDefaults.csproj" />
+  </ItemGroup>
+</Project>

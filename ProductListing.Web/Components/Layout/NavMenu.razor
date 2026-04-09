@@ -1,0 +1,11 @@
+<MudNavMenu Bordered="true" Rounded="true">
+  <MudNavLink Href="/" Icon="@Icons.Home" IconColor="Color.Info" Match="NavLinkMatch.All">
+    @nameof(Components.Pages.Home)
+  </MudNavLink>
+  <MudNavLink Href="@nameof(Components.Pages.Products)" Icon="@Icons.ShoppingCart" IconColor="Color.Error">
+    @nameof(Components.Pages.Products)
+  </MudNavLink>
+  <MudNavLink Href="@nameof(Components.Pages.Benchmark)" Icon="@Icons.Speed" IconColor="Color.Warning">
+    @nameof(Components.Pages.Benchmark)
+  </MudNavLink>
+</MudNavMenu>
